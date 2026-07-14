@@ -8,18 +8,34 @@
 
 void Sherbert::Pipeline::Initialize(VkDevice device, VkExtent2D extent, VkRenderPass renderPass)
 {
-    // --- 1. Create pipeline layout ---
+    /*
+     * The pipeline layout describes what resources the shaders can access.
+     * Currently this renderer has no external resources, so the layout is empty.
+     * Future features such as textures, camera matrices, and lighting data would
+     * be exposed here through descriptor sets or push constants.
+     */
     VkPipelineLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
-    if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) 
+    {
         throw std::runtime_error("Failed to create pipeline layout!");
     }
 
-    // --- 2. Load SPIR-V shaders ---
+    /*
+     * Vulkan does not compile shaders at runtime.
+     * Source shaders: (triangle.vert, triangle.frag)
+     * are compiled beforehand into SPIR-V: (triangle.vert.spv, triangle.frag.spv)
+     * SPIR-V is an intermediate binary format that Vulkan drivers understand.
+     */
     VkShaderModule vertShaderModule = LoadShaderModule(device, "Shaders/triangle.vert.spv");
     VkShaderModule fragShaderModule = LoadShaderModule(device, "Shaders/triangle.frag.spv");
 
+    /*
+     * A shader stage describes one step of the GPU pipeline.
+     * Vertex shader: Converts vertex data into clip-space positions.
+     * Fragment shader: Calculates the final colour of each pixel.
+     */
     VkPipelineShaderStageCreateInfo vertStage{};
     vertStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertStage.stage  = VK_SHADER_STAGE_VERTEX_BIT;
@@ -32,19 +48,43 @@ void Sherbert::Pipeline::Initialize(VkDevice device, VkExtent2D extent, VkRender
     fragStage.module = fragShaderModule;
     fragStage.pName  = "main";
 
+    /*
+     * Defines how vertex data is passed into the vertex shader.
+     * This triangle uses no vertex buffer. Instead, the vertex shader generates
+     * the triangle positions internally using gl_VertexIndex.
+     *
+     * A normal renderer would describe:
+     * - Vertex buffer bindings
+     * - Position attributes
+     * - Texture coordinates
+     * - Normals
+     * - Colours
+     */
     VkPipelineShaderStageCreateInfo shaderStages[] = { vertStage, fragStage };
 
-// --- 3. Minimal fixed-function state ---
     VkPipelineVertexInputStateCreateInfo vertexInput{};
     vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInput.vertexBindingDescriptionCount = 0;
     vertexInput.vertexAttributeDescriptionCount = 0;
 
+    /*
+     * Defines how vertices are assembled into primitives.
+     * Triangle list means: Vertex 0 + Vertex 1 + Vertex 2 = Triangle
+     * Other options include:
+     *     LINE_LIST
+     *     TRIANGLE_STRIP
+     *     POINT_LIST
+     */
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
+    /*
+     * The viewport transforms coordinates from the vertex shader into screen coordinates.
+     * The scissor rectangle defines the area where pixels are allowed to be written.
+     * Together they control where rendering appears on screen.
+     */
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -64,6 +104,15 @@ void Sherbert::Pipeline::Initialize(VkDevice device, VkExtent2D extent, VkRender
     viewportState.scissorCount = 1;
     viewportState.pScissors = &scissor;
 
+    /*
+     * Rasterization converts geometric primitives into fragments (potential pixels).
+     * This controls things like:
+     * - Polygon fill mode
+     * - Backface culling
+     * - Triangle winding direction
+     *
+     * For example, backface culling prevents drawing triangles facing away from the camera.
+     */
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
@@ -74,10 +123,24 @@ void Sherbert::Pipeline::Initialize(VkDevice device, VkExtent2D extent, VkRender
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
+    /*
+     * Controls anti-aliasing. VK_SAMPLE_COUNT_1_BIT means multisampling is disabled.
+     * Increasing this value enables techniques such as MSAA, where multiple
+     * samples are taken per pixel to smooth triangle edges.
+     */
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+    /*
+     * Controls how the output colour is combined with the existing framebuffer.
+     * Blending is commonly used for:
+     * - Transparent objects
+     * - Particle effects
+     * - UI elements
+     *
+     * This renderer simply overwrites the existing colour.
+     */
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
@@ -90,7 +153,13 @@ void Sherbert::Pipeline::Initialize(VkDevice device, VkExtent2D extent, VkRender
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
-    // --- 4. Graphics pipeline ---
+    /*
+     * Create the complete graphics pipeline.
+     * After this call, Vulkan has a preconfigured GPU program describing exactly
+     * how rendering should occur.
+     * Vulkan pipelines are immutable. If a setting changes, a new pipeline is
+     * usually created rather than modifying the existing one.
+     */
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
@@ -105,11 +174,12 @@ void Sherbert::Pipeline::Initialize(VkDevice device, VkExtent2D extent, VkRender
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) 
+    {
         throw std::runtime_error("Failed to create graphics pipeline!");
     }
 
-    // --- 5. Cleanup shader modules ---
+    // Cleanup shader modules
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
     vkDestroyShaderModule(device, fragShaderModule, nullptr);
 }
@@ -130,7 +200,11 @@ void Sherbert::Pipeline::Cleanup(VkDevice device)
 
 VkShaderModule Sherbert::Pipeline::LoadShaderModule(VkDevice device, const std::string& filepath)
 {
-    // --- 1. Read the SPIR-V file into a vector of bytes ---
+    /*
+     * Shader files are loaded as binary SPIR-V data.
+     * The Vulkan driver does not receive GLSL source code. The shader compiler
+     * produces SPIR-V first, then Vulkan creates a shader module from that binary.
+     */
     std::ifstream file(filepath, std::ios::ate | std::ios::binary);
     if (!file.is_open())
     {
@@ -144,7 +218,7 @@ VkShaderModule Sherbert::Pipeline::LoadShaderModule(VkDevice device, const std::
     file.read(buffer.data(), fileSize);
     file.close();
 
-    // --- 2. Create the shader module ---
+    // Create shader module
     VkShaderModuleCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = buffer.size();
