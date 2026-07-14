@@ -7,10 +7,10 @@
 <a href="https://isocpp.org/"> <img height="40" img width="40" src="https://cdn.simpleicons.org/cplusplus"></a>
 <a href="https://cmake.org/"> <img height="40" img width="40" src="https://cdn.simpleicons.org/cmake"></a>
 <a href="https://www.vulkan.org/"> <img height="40" img width="40" src="https://cdn.simpleicons.org/vulkan"></a>
-<img align="right" alt="Stars Badge" src="https://img.shields.io/github/stars/jdsherbert/Sherbert-Vulkan-Template?label=%E2%AD%90"/>
-<img align="right" alt="Forks Badge" src="https://img.shields.io/github/forks/jdsherbert/Sherbert-Vulkan-Template?label=%F0%9F%8D%B4"/>
-<img align="right" alt="Watchers Badge" src="https://img.shields.io/github/watchers/jdsherbert/Sherbert-Vulkan-Template?label=%F0%9F%91%81%EF%B8%8F"/>
-<img align="right" alt="Issues Badge" src="https://img.shields.io/github/issues/jdsherbert/Sherbert-Vulkan-Template?label=%E2%9A%A0%EF%B8%8F"/>
+<img align="right" alt="Stars Badge" src="https://img.shields.io/github/stars/jdsherbert/Sherbert-Vulkan-Renderer-Template?label=%E2%AD%90"/>
+<img align="right" alt="Forks Badge" src="https://img.shields.io/github/forks/jdsherbert/Sherbert-Vulkan-Renderer-Template?label=%F0%9F%8D%B4"/>
+<img align="right" alt="Watchers Badge" src="https://img.shields.io/github/watchers/jdsherbert/Sherbert-Vulkan-Renderer-Template?label=%F0%9F%91%81%EF%B8%8F"/>
+<img align="right" alt="Issues Badge" src="https://img.shields.io/github/issues/jdsherbert/Sherbert-Vulkan-Renderer-Template?label=%E2%9A%A0%EF%B8%8F"/>
 <!-- Header End --> 
 
 -----------------------------------------------------------------------
@@ -84,8 +84,8 @@ The included triangle renderer provides a complete minimal example of the Vulkan
 ### Building
 
 ```bash
-git clone https://github.com/JDSherbert/Sherbert-Vulkan-Template.git
-cd Sherbert-Vulkan-Template
+git clone https://github.com/JDSherbert/Sherbert-Vulkan-Renderer-Template.git
+cd Sherbert-Vulkan-Renderer-Template
 
 cmake -B Build
 cmake --build Build --config Release
