@@ -91,3 +91,21 @@ cmake -B Build
 cmake --build Build --config Release
 ```
 
+### Shader Compilation
+
+This template uses Vulkan's SPIR-V shader format.
+The included GLSL shaders:
+```
+Shaders/
+├── triangle.vert
+└── triangle.frag
+```
+are automatically compiled into SPIR-V bytecode during the CMake build process.
+The project uses `glslangValidator` from the Vulkan SDK to perform this conversion.
+Make sure the Vulkan SDK is installed and that `glslangValidator` is available in your system PATH.
+You can verify this by running:
+
+```bash
+glslangValidator --version
+```
+If the command is not found, add the Vulkan SDK Bin directory to your PATH.
