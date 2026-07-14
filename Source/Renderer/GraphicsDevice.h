@@ -8,30 +8,46 @@
 
 namespace Sherbert
 {
-
-    /*
-    GraphicsDevice
-
-    Encapsulates all Vulkan device-level functionality:
-    - physicalDevice: represents the actual GPU hardware (read-only)
-        Use this to query properties, supported features, memory, etc.
-    - device: the logical device handle we use to submit commands
-        Created from the physical device, enables queues, features, and extensions.
-    - graphicsQueue / presentQueue: handles to queues where command buffers are submitted
-        These come from the logical device, not the physical device.
-
-    In short:
-        physicalDevice = the GPU itself
-        device         = software interface to the GPU
-        queues         = where we actually send draw/compute commands
-
-    */
+    /**
+     * Handles Vulkan device initialization and GPU communication.
+     * Vulkan separates the concept of a physical GPU from the interface used
+     * to communicate with it:
+     * Physical Device:
+     *   Represents the actual hardware installed in the system.
+     *   Used for:
+     *   - Querying GPU properties
+     *   - Checking supported features
+     *   - Checking available memory
+     *   - Selecting a suitable GPU
+     *
+     * Logical Device:
+     *   A Vulkan-created interface to the physical GPU.
+     *   Used for:
+     *   - Creating resources
+     *   - Creating pipelines
+     *   - Submitting commands
+     *   - Accessing GPU queues
+     *
+     * Queues:
+     *   The execution channels where commands are submitted.
+     *   Examples:
+     *   - Graphics queue: drawing and rendering commands
+     *   - Compute queue: general GPU computation
+     *   - Transfer queue: copying data between resources
+     *
+     * In simple terms:
+     *   physicalDevice = the GPU hardware
+     *   device         = our Vulkan connection to that GPU
+     *   queues         = where we send GPU work
+     */
     class GraphicsDevice
     {
 
     public:
 
+        // Finds a suitable GPU and creates the Vulkan logical device.
         void Initialize(VkInstance instance, const Window& window);
+
         [[nodiscard]] VkDevice GetDevice() const { return device; }
         [[nodiscard]] VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] VkQueue GetGraphicsQueue() const { return graphicsQueue; }
@@ -41,10 +57,32 @@ namespace Sherbert
 
     private:
 
+        /*
+         * The selected physical GPU.
+         * This handle cannot be used to submit commands. It is only used to
+         * inspect hardware capabilities and create a logical device.
+         */
         VkPhysicalDevice physicalDevice{ VK_NULL_HANDLE };
+
+        // The Vulkan interface used to communicate with the physical GPU.
         VkDevice device{ VK_NULL_HANDLE };
+
+        /*
+         * Queues obtained from the logical device.
+         * Command buffers are submitted to these queues for execution.
+         */
         VkQueue graphicsQueue{ VK_NULL_HANDLE };
         VkQueue presentQueue{ VK_NULL_HANDLE };
+
+        /*
+         * Queue family indices identify which queues support which operations.
+         * A GPU may expose multiple queue families:
+         * - Graphics
+         * - Compute
+         * - Transfer
+         *
+         * This simple renderer assumes graphics and presentation use the same queue family.
+         */
         uint32_t graphicsQueueFamily{ UINT32_MAX };
         uint32_t presentQueueFamily{ UINT32_MAX };
 
