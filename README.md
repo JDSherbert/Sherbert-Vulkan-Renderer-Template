@@ -1,7 +1,7 @@
 <img width="1400" height="583" alt="image" src="https://github.com/user-attachments/assets/6372e8ea-9388-47ad-98f7-2415649f54c2" />
 
 
-# Sherbert Vulkan Template
+# Sherbert Vulkan Renderer Template
 
 <!-- Header Start -->
 <a href="https://isocpp.org/"> <img height="40" img width="40" src="https://cdn.simpleicons.org/cplusplus"></a>
