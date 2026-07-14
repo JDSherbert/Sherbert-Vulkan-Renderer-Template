@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 # Find Vulkan
 find_package(Vulkan REQUIRED)
 
-# --- Shader compilation ---
+# Vulkan shaders are not compiled at runtime.
+# They must be converted from GLSL source into SPIR-V bytecode before being loaded by Vulkan.
 find_program(GLSLANG_VALIDATOR glslangValidator)
 
 if(NOT GLSLANG_VALIDATOR)
