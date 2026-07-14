@@ -29,7 +29,7 @@
 -----------------------------------------------------------------------
 ## Overview
 
-Sherbert Vulkan Template is a lightweight Vulkan renderer starter project designed to get developers rendering as quickly as possible.
+Sherbert Vulkan Renderer Template is a lightweight Vulkan renderer starter project designed to get developers rendering as quickly as possible.
 
 Rather than spending hours implementing Vulkan boilerplate before seeing anything on screen, this template provides a complete working renderer with the core setup already implemented. The project creates a Vulkan instance, selects a graphics device, creates a swapchain, configures a render pass and graphics pipeline, records command buffers, and presents a rendered triangle.
 
