@@ -15,17 +15,28 @@ void Sherbert::CommandBuffers::Initialize
     const std::vector<VkImageView>& swapchainImageViews
 )
 {
-     // --- 1. Create a command pool ---
+    
+    /*
+     * A command pool manages memory used for allocating command buffers.
+     * Command buffers must come from a pool associated with the queue family that
+     * will execute them.
+     */
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.queueFamilyIndex = 0; // TODO: Replace with actual graphics queue family index
 
-    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) 
+    {
         throw std::runtime_error("Failed to create command pool!");
     }
 
-    // --- 2. Create framebuffers for each swapchain image ---
+    /*
+     * A framebuffer connects the render pass to actual image resources.
+     * RenderPass: "I need a colour attachment"
+     * Framebuffer: "Here is the specific swapchain image to use"
+     * Each swapchain image gets its own framebuffer.
+     */
     framebuffers.resize(swapchainImages.size());
     for (size_t i = 0; i < swapchainImages.size(); i++) {
         VkFramebufferCreateInfo framebufferInfo{};
@@ -42,7 +53,11 @@ void Sherbert::CommandBuffers::Initialize
         }
     }
 
-    // --- 3. Allocate command buffers ---
+    /*
+     * Allocate one command buffer for each framebuffer.
+     * During rendering, the acquired swapchain image index determines which
+     * command buffer should be submitted.
+     */
     commandBuffers.resize(framebuffers.size());
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -50,11 +65,12 @@ void Sherbert::CommandBuffers::Initialize
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
-    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) 
+    {
         throw std::runtime_error("Failed to allocate command buffers!");
     }
 
-    // --- 4. Record commands ---
+    // Record commands
     for (size_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -80,12 +96,20 @@ void Sherbert::CommandBuffers::Initialize
         // Bind the graphics pipeline
         vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-        // Draw a single triangle (3 vertices, 1 instance)
+        /*
+         * Draw three vertices as one triangle.
+         * No vertex buffer is bound because the vertex shader generates the triangle
+         * positions internally using gl_VertexIndex. A full renderer would normally:
+         * 1. Bind vertex buffers
+         * 2. Bind descriptor sets
+         * 3. Issue draw calls
+         */
         vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
 
         vkCmdEndRenderPass(commandBuffers[i]);
 
-        if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+        if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) 
+        {
             throw std::runtime_error("Failed to record command buffer!");
         }
     }
@@ -93,19 +117,23 @@ void Sherbert::CommandBuffers::Initialize
 
 void Sherbert::CommandBuffers::Cleanup(VkDevice device)
 {
-    for (auto fb : framebuffers) {
-        if (fb != VK_NULL_HANDLE) {
+    for (auto fb : framebuffers) 
+    {
+        if (fb != VK_NULL_HANDLE) 
+        {
             vkDestroyFramebuffer(device, fb, nullptr);
         }
     }
     framebuffers.clear();
 
-    if (!commandBuffers.empty() && commandPool != VK_NULL_HANDLE) {
+    if (!commandBuffers.empty() && commandPool != VK_NULL_HANDLE) 
+    {
         vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
         commandBuffers.clear();
     }
 
-    if (commandPool != VK_NULL_HANDLE) {
+    if (commandPool != VK_NULL_HANDLE) 
+    {
         vkDestroyCommandPool(device, commandPool, nullptr);
         commandPool = VK_NULL_HANDLE;
     }
